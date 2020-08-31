@@ -29,6 +29,7 @@ public abstract class PathProcessor
 	protected int index;
 	protected boolean done;
 	protected int ticksOffPath;
+	public boolean doJump = true;
 	
 	public PathProcessor(ArrayList<PathPos> path)
 	{

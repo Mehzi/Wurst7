@@ -48,7 +48,7 @@ import net.wurstclient.util.RenderUtils;
 import net.wurstclient.util.RotationUtils;
 import net.wurstclient.util.RotationUtils.Rotation;
 
-public final class KillauraLegitHack extends Hack
+public final class InteractHack extends Hack
 	implements UpdateListener, RenderListener
 {
 	private final SliderSetting range =
@@ -63,7 +63,7 @@ public final class KillauraLegitHack extends Hack
 		Priority.values(), Priority.ANGLE);
 	
 	private final CheckboxSetting filterPlayers = new CheckboxSetting(
-		"Filter players", "Won't attack other players.", false);
+		"Filter players", "Won't attack other players.", true);
 	private final CheckboxSetting filterSleeping = new CheckboxSetting(
 		"Filter sleeping", "Won't attack sleeping players.", true);
 	private final SliderSetting filterFlying =
@@ -74,41 +74,40 @@ public final class KillauraLegitHack extends Hack
 			v -> v == 0 ? "off" : ValueDisplay.DECIMAL.getValueString(v));
 	
 	private final CheckboxSetting filterMonsters = new CheckboxSetting(
-		"Filter monsters", "Won't attack zombies, creepers, etc.", false);
+		"Filter monsters", "Won't attack zombies, creepers, etc.", true);
 	private final CheckboxSetting filterPigmen = new CheckboxSetting(
-		"Filter pigmen", "Won't attack zombie pigmen.", false);
+		"Filter pigmen", "Won't attack zombie pigmen.", true);
 	private final CheckboxSetting filterEndermen =
-		new CheckboxSetting("Filter endermen", "Won't attack endermen.", false);
+		new CheckboxSetting("Filter endermen", "Won't attack endermen.", true);
 	
 	private final CheckboxSetting filterAnimals = new CheckboxSetting(
-		"Filter animals", "Won't attack pigs, cows, etc.", false);
+		"Filter animals", "Won't attack pigs, cows, etc.", true);
 	private final CheckboxSetting filterBabies =
 		new CheckboxSetting("Filter babies",
-			"Won't attack baby pigs,\n" + "baby villagers, etc.", false);
+			"Won't attack baby pigs,\n" + "baby villagers, etc.", true);
 	private final CheckboxSetting filterPets =
 		new CheckboxSetting("Filter pets",
-			"Won't attack tamed wolves,\n" + "tamed horses, etc.", false);
+			"Won't attack tamed wolves,\n" + "tamed horses, etc.", true);
 	
 	private final CheckboxSetting filterTraders =
 		new CheckboxSetting("Filter traders",
-			"Won't attack villagers, wandering traders, etc.", false);
+			"Won't attack villagers, wandering traders, etc.", true);
 	
 	private final CheckboxSetting filterGolems =
 		new CheckboxSetting("Filter golems",
-			"Won't attack iron golems,\n" + "snow golems and shulkers.", false);
+			"Won't attack iron golems,\n" + "snow golems and shulkers.", true);
 	
 	private final CheckboxSetting filterInvisible = new CheckboxSetting(
-		"Filter invisible", "Won't attack invisible entities.", true);
+		"Filter invisible", "Won't attack invisible entities.", false);
 	private final CheckboxSetting filterStands = new CheckboxSetting(
 		"Filter armor stands", "Won't attack armor stands.", false);
 	
 	private LivingEntity target;
 	private long lastAttack;
 	
-	public KillauraLegitHack()
+	public InteractHack()
 	{
-		super("KillauraLegit", "Slower Killaura that is harder to detect.\n"
-			+ "Not required on normal NoCheat+ servers!");
+		super("Interact", "Talks to the closest NPC in skyblock");
 		setCategory(Category.COMBAT);
 		addSetting(range);
 		addSetting(priority);
@@ -245,6 +244,7 @@ public final class KillauraLegitHack extends Hack
 		WURST.getHax().criticalsHack.doCritical();
 		MC.interactionManager.attackEntity(player, target);
 		player.swingHand(Hand.MAIN_HAND);
+		this.setEnabled(false);
 	}
 	
 	private boolean faceEntityClient(LivingEntity entity)

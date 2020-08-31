@@ -62,6 +62,10 @@ public final class FightBotHack extends Hack
 	private final CheckboxSetting useAi =
 		new CheckboxSetting("Use AI (experimental)", false);
 	
+	private final CheckboxSetting doJump = new CheckboxSetting(
+			"Use code jump", "Won't jump during the AI pathing.", false);
+		
+	
 	private final CheckboxSetting filterPlayers = new CheckboxSetting(
 		"Filter players", "Won't attack other players.", false);
 	
@@ -111,6 +115,7 @@ public final class FightBotHack extends Hack
 	private EntityPathFinder pathFinder;
 	private PathProcessor processor;
 	private int ticksProcessing;
+	private long lastAttack = System.currentTimeMillis();
 	
 	public FightBotHack()
 	{
@@ -136,6 +141,7 @@ public final class FightBotHack extends Hack
 		addSetting(filterGolems);
 		addSetting(filterInvisible);
 		addSetting(filterStands);
+		addSetting(doJump);
 	}
 	
 	@Override
@@ -235,6 +241,9 @@ public final class FightBotHack extends Hack
 		if(filterStands.isChecked())
 			stream = stream.filter(e -> !(e instanceof ArmorStandEntity));
 		
+		stream = stream.filter(e-> Math.abs(e.getBlockPos().getY() - MC.player.getBlockPos().getY()) < 5);
+		
+		
 		Entity entity = stream
 			.min(
 				Comparator.comparingDouble(e -> MC.player.squaredDistanceTo(e)))
@@ -265,6 +274,11 @@ public final class FightBotHack extends Hack
 				pathFinder.think();
 				pathFinder.formatPath();
 				processor = pathFinder.getProcessor();
+				if (doJump.isChecked()) {
+					processor.doJump = true;
+				} else {
+					processor.doJump = false;
+				}
 			}
 			
 			// process path
@@ -312,12 +326,21 @@ public final class FightBotHack extends Hack
 		if(MC.player.getAttackCooldownProgress(0) < 1)
 			return;
 		
+		if (System.currentTimeMillis() - lastAttack > 80) {
+			lastAttack = System.currentTimeMillis();
+		} else {
+			return;
+		}
+		
+		if (Math.random() > 0.95) {
+			return;
+		}
+		
 		// check range
 		if(MC.player.squaredDistanceTo(entity) > Math.pow(range.getValue(), 2))
 			return;
 		
 		// attack entity
-		WURST.getHax().criticalsHack.doCritical();
 		MC.interactionManager.attackEntity(MC.player, entity);
 		MC.player.swingHand(Hand.MAIN_HAND);
 	}

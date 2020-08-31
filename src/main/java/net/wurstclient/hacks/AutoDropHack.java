@@ -16,6 +16,7 @@ import net.wurstclient.Category;
 import net.wurstclient.SearchTags;
 import net.wurstclient.events.UpdateListener;
 import net.wurstclient.hack.Hack;
+import net.wurstclient.settings.CheckboxSetting;
 import net.wurstclient.settings.ItemListSetting;
 
 @SearchTags({"auto drop", "AutoEject", "auto-eject", "auto eject",
@@ -32,6 +33,12 @@ public final class AutoDropHack extends Hack implements UpdateListener
 		"minecraft:rose_bush", "minecraft:rotten_flesh", "minecraft:sunflower",
 		"minecraft:wheat_seeds", "minecraft:white_tulip");
 	
+	private final CheckboxSetting filterEnchanted = new CheckboxSetting(
+			"Filter Enchanted items", "Won't drop enchanted items.", false);
+	
+	private final CheckboxSetting filterUnenchanted = new CheckboxSetting(
+			"Filter Unenchanted items", "Won't drop unenchanted items.", false);
+	
 	private final String renderName =
 		Math.random() < 0.01 ? "AutoLinus" : getName();
 	
@@ -40,6 +47,8 @@ public final class AutoDropHack extends Hack implements UpdateListener
 		super("AutoDrop", "Automatically drops unwanted items.");
 		setCategory(Category.ITEMS);
 		addSetting(items);
+		addSetting(filterEnchanted);
+		addSetting(filterUnenchanted);
 	}
 	
 	@Override
@@ -83,6 +92,16 @@ public final class AutoDropHack extends Hack implements UpdateListener
 			
 			if(!items.getItemNames().contains(itemName))
 				continue;
+			
+			if (filterEnchanted.isChecked()) {
+				if (stack.hasGlint())
+					continue;
+			}
+			
+			if (filterUnenchanted.isChecked()) {
+				if (!stack.hasGlint())
+					continue;
+			}
 			
 			IMC.getInteractionManager().windowClick_THROW(slot);
 		}

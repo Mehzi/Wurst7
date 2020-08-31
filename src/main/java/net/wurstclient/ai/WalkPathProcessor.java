@@ -21,6 +21,7 @@ import net.wurstclient.util.RotationUtils;
 
 public class WalkPathProcessor extends PathProcessor
 {
+	
 	public WalkPathProcessor(ArrayList<PathPos> path)
 	{
 		super(path);
@@ -68,10 +69,12 @@ public class WalkPathProcessor extends PathProcessor
 		WurstClient.MC.player.abilities.flying = false;
 		
 		// face next position
-		facePosition(nextPos);
 		if(MathHelper.wrapDegrees(Math.abs(RotationUtils
-			.getHorizontalAngleToLookVec(Vec3d.ofCenter(nextPos)))) > 90)
+			.getHorizontalAngleToLookVec(Vec3d.ofCenter(nextPos)))) > 135) {
+			MC.options.keyBack.setPressed(true);
 			return;
+		}
+		facePosition(nextPos);
 		
 		if(WURST.getHax().jesusHack.isEnabled())
 		{
@@ -96,7 +99,12 @@ public class WalkPathProcessor extends PathProcessor
 			
 			if(index > 0 && path.get(index - 1).isJumping()
 				|| pos.getY() < nextPos.getY())
-				MC.options.keyJump.setPressed(true);
+				if (doJump) {
+					MC.options.keyJump.setPressed(true);
+				} else {
+					MC.options.keyForward.setPressed(true);
+				}
+				
 			
 			// vertical movement
 		}else if(pos.getY() != nextPos.getY())
@@ -121,7 +129,11 @@ public class WalkPathProcessor extends PathProcessor
 						index++;
 					
 					// jump up
-					MC.options.keyJump.setPressed(true);
+					if (doJump) {
+						MC.options.keyJump.setPressed(true);
+					} else {
+						MC.options.keyForward.setPressed(true);
+					}
 				}
 				
 				// go down
