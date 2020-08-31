@@ -16,8 +16,10 @@ import org.lwjgl.opengl.GL11;
 
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.world.ClientWorld;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.decoration.ArmorStandEntity;
+import net.minecraft.entity.decoration.EndCrystalEntity;
 import net.minecraft.entity.mob.AmbientEntity;
 import net.minecraft.entity.mob.EndermanEntity;
 import net.minecraft.entity.mob.Monster;
@@ -99,11 +101,14 @@ public final class KillauraLegitHack extends Hack
 	
 	private final CheckboxSetting filterInvisible = new CheckboxSetting(
 		"Filter invisible", "Won't attack invisible entities.", true);
+	
 	private final CheckboxSetting filterStands = new CheckboxSetting(
 		"Filter armor stands", "Won't attack armor stands.", false);
+	private final CheckboxSetting filterCrystals = new CheckboxSetting(
+		"Filter end crytsals", "Won't attack end crystals.", false);
 	
-	private LivingEntity target;
 	private long lastAttack;
+	private Entity target;
 	
 	public KillauraLegitHack()
 	{
@@ -125,6 +130,7 @@ public final class KillauraLegitHack extends Hack
 		addSetting(filterGolems);
 		addSetting(filterInvisible);
 		addSetting(filterStands);
+		addSetting(filterCrystals);
 	}
 	
 	@Override
@@ -167,14 +173,16 @@ public final class KillauraLegitHack extends Hack
 		}
 		
 		double rangeSq = Math.pow(range.getValue(), 2);
-		Stream<LivingEntity> stream = StreamSupport
-			.stream(MC.world.getEntities().spliterator(), true)
-			.filter(e -> e instanceof LivingEntity).map(e -> (LivingEntity)e)
-			.filter(e -> !e.removed && e.getHealth() > 0)
-			.filter(e -> player.squaredDistanceTo(e) <= rangeSq)
-			.filter(e -> e != player)
-			.filter(e -> !(e instanceof FakePlayerEntity))
-			.filter(e -> !WURST.getFriends().contains(e.getEntityName()));
+		Stream<Entity> stream =
+			StreamSupport.stream(MC.world.getEntities().spliterator(), true)
+				.filter(e -> !e.removed)
+				.filter(e -> e instanceof LivingEntity
+					&& ((LivingEntity)e).getHealth() > 0
+					|| e instanceof EndCrystalEntity)
+				.filter(e -> player.squaredDistanceTo(e) <= rangeSq)
+				.filter(e -> e != player)
+				.filter(e -> !(e instanceof FakePlayerEntity))
+				.filter(e -> !WURST.getFriends().contains(e.getEntityName()));
 		
 		if(filterPlayers.isChecked())
 			stream = stream.filter(e -> !(e instanceof PlayerEntity));
@@ -231,6 +239,9 @@ public final class KillauraLegitHack extends Hack
 		if(filterStands.isChecked())
 			stream = stream.filter(e -> !(e instanceof ArmorStandEntity));
 		
+		if(filterCrystals.isChecked())
+			stream = stream.filter(e -> !(e instanceof EndCrystalEntity));
+		
 		target = stream.min(priority.getSelected().comparator).orElse(null);
 		if(target == null)
 			return;
@@ -247,7 +258,7 @@ public final class KillauraLegitHack extends Hack
 		player.swingHand(Hand.MAIN_HAND);
 	}
 	
-	private boolean faceEntityClient(LivingEntity entity)
+	private boolean faceEntityClient(Entity entity)
 	{
 		// get position & rotation
 		Vec3d eyesPos = RotationUtils.getEyesPos();
@@ -259,7 +270,7 @@ public final class KillauraLegitHack extends Hack
 			return true;
 		
 		// if not facing center, check if facing anything in boundingBox
-		return bb.rayTrace(eyesPos,
+		return bb.raycast(eyesPos,
 			eyesPos.add(lookVec.multiply(range.getValue()))) != null;
 	}
 	
@@ -305,8 +316,12 @@ public final class KillauraLegitHack extends Hack
 		RenderUtils.applyRenderOffset();
 		
 		Box box = new Box(BlockPos.ORIGIN);
-		float p = (target.getMaxHealth() - target.getHealth())
-			/ target.getMaxHealth();
+		float p = 1;
+		if(target instanceof LivingEntity)
+		{
+			LivingEntity le = (LivingEntity)target;
+			p = (le.getMaxHealth() - le.getHealth()) / le.getMaxHealth();
+		}
 		float red = p * 2F;
 		float green = 2 - red;
 		
@@ -349,13 +364,13 @@ public final class KillauraLegitHack extends Hack
 			e -> RotationUtils
 				.getAngleToLookVec(e.getBoundingBox().getCenter())),
 		
-		HEALTH("Health", e -> e.getHealth());
+		HEALTH("Health", e -> e instanceof LivingEntity
+			? ((LivingEntity)e).getHealth() : Integer.MAX_VALUE);
 		
 		private final String name;
-		private final Comparator<LivingEntity> comparator;
+		private final Comparator<Entity> comparator;
 		
-		private Priority(String name,
-			ToDoubleFunction<LivingEntity> keyExtractor)
+		private Priority(String name, ToDoubleFunction<Entity> keyExtractor)
 		{
 			this.name = name;
 			comparator = Comparator.comparingDouble(keyExtractor);

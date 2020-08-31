@@ -16,6 +16,7 @@ import org.lwjgl.opengl.GL11;
 
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.world.ClientWorld;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.decoration.ArmorStandEntity;
 import net.minecraft.entity.mob.AmbientEntity;
@@ -247,7 +248,7 @@ public final class InteractHack extends Hack
 		this.setEnabled(false);
 	}
 	
-	private boolean faceEntityClient(LivingEntity entity)
+	private boolean faceEntityClient(Entity entity)
 	{
 		// get position & rotation
 		Vec3d eyesPos = RotationUtils.getEyesPos();
@@ -259,7 +260,7 @@ public final class InteractHack extends Hack
 			return true;
 		
 		// if not facing center, check if facing anything in boundingBox
-		return bb.rayTrace(eyesPos,
+		return bb.raycast(eyesPos,
 			eyesPos.add(lookVec.multiply(range.getValue()))) != null;
 	}
 	
